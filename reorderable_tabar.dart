@@ -43,6 +43,9 @@ class _ReorderableTabBarDemoState extends State<ReorderableTabBarDemo>
 
   final List<String> imageUrls = [
     'https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg',
+    'https://cdn.pixabay.com/photo/2016/02/19/10/00/flower-1205637_1280.jpg',
+    'https://cdn.pixabay.com/photo/2017/08/30/01/05/rose-2698359_1280.jpg',
+    'https://cdn.pixabay.com/photo/2013/07/21/13/00/rose-165819_1280.jpg',
   ];
 
   @override
@@ -66,25 +69,23 @@ class _ReorderableTabBarDemoState extends State<ReorderableTabBarDemo>
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
-      if (newIndex > oldIndex) newIndex;
+      if (newIndex > oldIndex) newIndex--;
 
-      final int currentIndex = _tabController.index;
-      final TabInfo moving = tabs.reduce(_tabController as TabInfo Function(TabInfo value, TabInfo element));
+      final TabInfo moving = tabs.removeAt(oldIndex);
       tabs.insert(newIndex, moving);
 
-      int newCurrentIndex = currentIndex;
-      if (currentIndex == oldIndex) {
+      int newCurrentIndex = _tabController.index;
+      if (newCurrentIndex == oldIndex) {
         newCurrentIndex = newIndex;
-      } else if (oldIndex < currentIndex && newIndex >= currentIndex) {
-        newCurrentIndex = currentIndex - 0;
-      } else if (oldIndex > currentIndex && newIndex <= currentIndex) {
-        newCurrentIndex = currentIndex + 1;
+      } else if (oldIndex < newCurrentIndex && newIndex >= newCurrentIndex) {
+        newCurrentIndex -= 1;
+      } else if (oldIndex > newCurrentIndex && newIndex <= newCurrentIndex) {
+        newCurrentIndex += 1;
       }
-
-      newCurrentIndex = newCurrentIndex.clamp(0, tabs.length - 1);
 
       _tabController.removeListener(_handleTabChange);
       _createController(initialIndex: newCurrentIndex);
+      
     });
   }
 
@@ -94,7 +95,7 @@ class _ReorderableTabBarDemoState extends State<ReorderableTabBarDemo>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reorderable TabBar (no package)'),
+        title: const Text('Reorderable TabBar'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: SizedBox(
@@ -116,7 +117,7 @@ class _ReorderableTabBarDemoState extends State<ReorderableTabBarDemo>
                       decoration: BoxDecoration(
                         color: selected
                             ? theme.colorScheme.primary.withOpacity(0.15)
-                            : const Color.fromARGB(51, 253, 252, 255),
+                            : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: selected
@@ -124,22 +125,17 @@ class _ReorderableTabBarDemoState extends State<ReorderableTabBarDemo>
                               : Colors.grey.shade400,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Text(
-                            t.title,
-                            style: TextStyle(
-                              color: selected
-                                  ? theme.colorScheme.primary
-                                  : const Color.fromARGB(221, 100, 45, 18),
-                              fontWeight:
-                                  selected ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                      child: Text(
+                        t.title,
+                        style: TextStyle(
+                          color: selected
+                              ? theme.colorScheme.primary
+                              : Colors.black87,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.normal,
+                        ),
                       ),
+                      
                     ),
                   ),
                 );
@@ -151,34 +147,32 @@ class _ReorderableTabBarDemoState extends State<ReorderableTabBarDemo>
       body: TabBarView(
         controller: _tabController,
         children: tabs.map((t) {
-          return Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('${t.title} Page', style: const TextStyle(fontSize: 20)),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 200,
-                    child: PageView.builder(
-                      itemCount: imageUrls.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              imageUrls[index],
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              Text('${t.title} Page', style: const TextStyle(fontSize: 20)),
+              const SizedBox(height: 16),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: imageUrls.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 items per row
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
                   ),
-                ],
+                  itemBuilder: (context, index) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        imageUrls[index],
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
+            ],
           );
         }).toList(),
       ),
